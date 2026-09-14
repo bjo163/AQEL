@@ -3,92 +3,133 @@
 **Status:** Foundation draft  
 **Surface language:** Arabic-first  
 **Semantic core:** Language-neutral  
-**Execution target:** Native code
+**Execution direction:** Native code  
+**Source encoding:** UTF-8
 
 ## 1. Purpose
 
 AQEL is an Arabic-first programming language designed around four engineering goals:
 
 - **LIGHT** — low overhead and minimal mandatory runtime services.
-- **SMART** — explicit semantic constructs for facts, rules, inference, verification, and explanation.
+- **SMART** — explicit semantic constructs for facts, rules, queries, inference, verification, and explanation.
 - **SAFE** — strong typing and safety-oriented validation by default.
-- **FAST** — native execution with measurable performance targets.
+- **FAST** — native execution with reproducible performance measurement.
 
-Version 0.1 defines the language foundation. It intentionally favors a small, deterministic core over a large standard library or complex runtime.
+Version 0.1 defines the language foundation rather than the entire future platform. It deliberately favors a small, deterministic core over a large standard library, opaque AI dependency, or premature runtime complexity.
 
-## 2. Architecture
+## 2. Architectural model
 
-AQEL separates the language humans write from the semantic representation consumed by the compiler.
+AQEL separates surface syntax from program meaning.
 
 ```text
-Arabic / Future Language Packs
-             ↓
-            Lexer
-             ↓
-           Parser
-             ↓
-       Universal AST
-             ↓
-  Type / Safety / Semantics
-             ↓
-  Reasoning / Verification
-             ↓
-     Native Code Backend
+Arabic / Future Language Surface
+              ↓
+          Normalizer
+              ↓
+             Lexer
+              ↓
+            Parser
+              ↓
+        Universal AST
+              ↓
+  Name + Type + Semantic Analysis
+              ↓
+     Safety + Verification
+              ↓
+  Reasoning / Knowledge Engine
+              ↓
+      IR / Optimization
+              ↓
+       Native Backend
+              ↓
+          Executable
 ```
 
-The surface language may change while the semantic meaning remains stable. A future Indonesian or English syntax should compile to the same semantic model as the Arabic syntax.
+### Architectural invariant
+
+Different surface languages may produce the same Universal AST. A language pack may change spelling, grammar, or presentation, but it must not silently change the semantic meaning of the underlying AST.
 
 ## 3. Design constraints
 
 ### 3.1 Determinism
 
-The meaning of a valid AQEL program must be defined by the language specification and compiler implementation—not by an opaque language model.
+The meaning of a valid AQEL program is defined by the specification and compiler implementation. An LLM must not be the authority that decides program semantics.
 
 ### 3.2 Human readability
 
-Arabic keywords should make the structure of a program recognizable to Arabic readers without sacrificing precise grammar.
+Arabic syntax should be recognizable and readable to Arabic users while remaining formally parseable.
 
 ### 3.3 Machine precision
 
-Natural-language-looking syntax is only a surface representation. Parsing must produce explicit tokens and typed semantic nodes.
+Natural-language-looking syntax is only a surface representation. Parsing must produce explicit tokens and structured AST nodes.
 
 ### 3.4 Lightweight by default
 
-No feature should require a heavyweight service or AI model unless explicitly enabled by the program or tooling.
+Core compilation and execution must not require a cloud service, remote model, or heavyweight framework.
 
-## 4. Lexical rules
+### 3.5 Explicitness over magic
+
+AQEL may be expressive, but hidden side effects, implicit network access, implicit code loading, and ambiguous conversions are not part of the core design.
+
+## 4. Source and lexical model
 
 ### 4.1 Encoding
 
-- Source files use **UTF-8**.
-- Arabic keywords are first-class lexical tokens.
-- Identifiers may contain Arabic Unicode characters and Latin characters.
-- Decimal digits and programming punctuation use standard Unicode-compatible symbols.
+AQEL source files use UTF-8.
 
-### 4.2 Whitespace and structure
+### 4.2 Unicode normalization
 
-v0.1 uses line structure and indentation-sensitive blocks in the reference syntax.
+The implementation must define one canonical normalization policy before stable v0.1 compatibility is declared. Parser equivalence must not depend on a visually similar but differently encoded spelling.
+
+### 4.3 Identifiers
+
+Identifiers may use Arabic Unicode characters and Latin characters. The implementation should reject identifier forms that create visually confusing or security-sensitive ambiguity once the exact identifier policy is frozen.
+
+Reserved keywords cannot be reused as ordinary identifiers unless escaped syntax is later standardized.
+
+### 4.4 Keywords
+
+Arabic keywords are first-class tokens. Keyword recognition is based on normalized logical text, not visual RTL order.
+
+### 4.5 Digits and punctuation
+
+The reference syntax uses ordinary programming punctuation for operators and delimiters. Numeric literals are parsed as numeric tokens rather than as natural-language sentences.
+
+### 4.6 Comments
+
+The reference syntax reserves `#` for a line comment.
 
 Example:
+
+```arabic
+# تعليق
+عرّف العمر: رقم = 20
+```
+
+A block-comment syntax is reserved for a later version.
+
+### 4.7 Indentation
+
+The v0.1 reference syntax uses indentation-sensitive blocks.
 
 ```arabic
 إذا كان العمر >= 18:
     اعرض("بالغ")
 ```
 
-The reference parser must reject structurally invalid indentation rather than silently changing program meaning.
+Indentation must be structurally significant. Inconsistent indentation must produce a syntax error rather than being silently repaired.
 
-### 4.3 Bidirectional text
+### 4.8 Bidirectional text
 
-Arabic is right-to-left, while operators, numbers, file paths, and Latin identifiers may be left-to-right. AQEL therefore treats source code as a sequence of **logical tokens**, not as a visually ordered string.
+Arabic is right-to-left while operators, numbers, file paths, and Latin identifiers may be left-to-right. The compiler therefore operates on logical tokens. Visual bidirectional reordering must never change the token sequence or semantic meaning.
 
-Rendering or bidirectional reordering must never alter the token sequence or program semantics.
+Tooling should preserve source order when formatting and displaying diagnostics.
 
-### 4.4 Diacritics
+### 4.9 Diacritics
 
-Decorative Arabic diacritics are not required for keywords or identifiers in v0.1. This keeps source text simpler and avoids making syntactic correctness depend on pronunciation marks.
+Arabic diacritics are not required for keywords or identifiers. Semantic equivalence must not depend on decorative pronunciation marks.
 
-## 5. Initial keyword set
+## 5. Initial lexical keywords
 
 | Arabic | Semantic role |
 |---|---|
@@ -106,49 +147,89 @@ Decorative Arabic diacritics are not required for keywords or identifiers in v0.
 | `تحقق` | verification / constraint |
 | `اشرح` | structured explanation |
 
-The keyword set is intentionally small. Additional syntax must be justified by a stable semantic need.
+The keyword set is intentionally small. New keywords require a stable semantic need and should not merely provide another spelling for an existing construct.
 
-## 6. Bindings and types
+## 6. Program structure
 
-### 6.1 Declaration
+A source file is a sequence of top-level declarations and executable statements.
+
+Conceptually:
+
+```text
+Program
+ ├── Declaration*
+ ├── SemanticDeclaration*
+ └── Statement*
+```
+
+The reference implementation should reject trailing or unreachable syntax that cannot be assigned a defined semantic role.
+
+## 7. Literals and basic types
+
+### 7.1 Initial types
+
+v0.1 defines three initial value categories:
+
+- `رقم` — numeric value
+- `نص` — Unicode text value
+- `منطقي` — boolean value
+
+Future versions may add arrays, records, optional values, resources, and other types.
+
+### 7.2 Literal examples
+
+```arabic
+20
+"AQEL"
+صحيح
+خطأ
+```
+
+The exact spelling of boolean literals is part of the executable grammar and must be frozen before compatibility guarantees are introduced.
+
+### 7.3 Declaration
 
 ```arabic
 عرّف العمر: رقم = 20
 عرّف الاسم: نص = "أحمد"
 ```
 
-A declaration contains:
+A binding contains at minimum:
 
 ```text
-name + type + value
+name + declared type + initializer
 ```
 
-### 6.2 Initial type categories
+### 7.4 Type checking
 
-The v0.1 semantic model recognizes these initial categories:
+The compiler should reject incompatible assignments and invalid operations before execution when the type information is statically available.
 
-- `رقم` — numeric value
-- `نص` — text value
-- `منطقي` — boolean value
+Implicit conversions should be minimal and explicitly specified. Silent lossy conversions are not a core AQEL behavior.
 
-Additional types may be added later without changing the core declaration form.
+## 8. Expressions and operators
 
-### 6.3 Semantic metadata
-
-A binding may carry semantic metadata in addition to its static type.
-
-Conceptually:
+The minimum expression model requires:
 
 ```text
-NAME     = العمر
-VALUE    = 20
-TYPE     = Number
-SEMANTIC = Age
+literal
+identifier
+parenthesized expression
+unary expression
+binary expression
+function call
 ```
 
-Semantic metadata must not weaken static type checking.
+The initial comparison operators are:
 
-## 7. Expressions and conditions
+```text
+==  !=  <  <=  >  >=
+```
+
+Arithmetic operators are reserved for the executable reference implementation and should include at least the ordinary numeric operations before the grammar is frozen.
+
+Operator precedence and associativity must be specified formally by the parser implementation and conformance tests.
+
+## 9. Conditions and control flow
 
 Example:
 
@@ -159,11 +240,13 @@ Example:
     اعرض("قاصر")
 ```
 
-The parser should convert the expression into an explicit condition node rather than preserving it as raw natural-language text.
+`إذا` introduces a conditional block and `وإلا` introduces its alternative branch.
 
-## 8. Functions
+`كرر` is reserved for repetition. The exact loop forms, termination semantics, and mutation rules must be specified before it becomes part of the stable executable subset.
 
-The keyword `دالة` introduces a function. The exact parameter and return grammar is reserved for the executable v0.1 implementation.
+## 10. Functions
+
+`دالة` introduces a callable unit of ordinary deterministic computation.
 
 Conceptual form:
 
@@ -172,11 +255,22 @@ Conceptual form:
     ...
 ```
 
-Function semantics must remain ordinary, deterministic computation; semantic reasoning constructs are separate language features.
+`أرجع` returns a value from the current function.
 
-## 9. Facts
+The final v0.1 grammar must define:
 
-A fact is a structured statement that can be consumed by the reasoning layer.
+- parameter syntax
+- return-type syntax
+- argument evaluation order
+- recursion behavior
+- local scope
+- closure behavior, if supported
+
+These details are reserved until the reference implementation is built.
+
+## 11. Facts
+
+A fact is structured information available to the semantic reasoning layer.
 
 Example:
 
@@ -185,20 +279,20 @@ Example:
     أحمد عمره 20
 ```
 
-The parser must convert the statement into structured semantic data rather than treating the sentence as an arbitrary string.
-
-Conceptual representation:
+Conceptually:
 
 ```text
 FACT
- └── subject: أحمد
-     predicate: عمره
-     object: 20
+ ├── subject: أحمد
+ ├── predicate: عمره
+ └── object: 20
 ```
 
-## 10. Rules
+A fact is data, not an arbitrary string. The semantic representation must preserve its fields independently from the surface wording.
 
-A rule maps one or more conditions to a conclusion.
+## 12. Rules
+
+A rule maps conditions to a conclusion.
 
 Example:
 
@@ -207,9 +301,7 @@ Example:
     البالغ هو من عمره >= 18
 ```
 
-The first implementation uses **deterministic rule evaluation**. Probabilistic or generative reasoning is not part of the v0.1 language semantics.
-
-Conceptual representation:
+Conceptually:
 
 ```text
 RULE
@@ -217,67 +309,98 @@ RULE
  └── conclusion: adult
 ```
 
-## 11. Inference
+v0.1 reasoning is **deterministic**. The language does not define probabilistic, generative, or LLM-based inference semantics.
 
-Inference applies defined rules to available facts.
+## 13. Queries and inference
 
-Example:
+A query asks the semantic engine for information.
+
+```arabic
+اسأل:
+    أحمد بالغ
+```
+
+Inference applies rules to known facts and produces derived knowledge.
 
 ```arabic
 استنتج:
     أحمد بالغ
 ```
 
-A successful inference should retain a trace showing which facts and rules supported the result.
+An inference result must expose enough provenance to explain which facts and rules supported the result.
 
 Conceptual result:
 
 ```text
 INFERENCE
- ├── input: Ahmad.age = 20
- ├── rule: age >= 18 → adult
- └── result: Ahmad → adult
+ ├── inputs: known facts
+ ├── rules: applied rules
+ ├── result: derived fact
+ └── provenance: trace
 ```
 
-## 12. Verification and constraints
+## 14. Verification and constraints
 
-Verification expresses conditions that must hold.
-
-Example:
+`تحقق` expresses a condition that must hold.
 
 ```arabic
 تحقق:
     العمر >= 0
 ```
 
-A failed verification must produce a deterministic failure state. Future versions may use the same mechanism for compile-time contracts, runtime assertions, resource constraints, and safety checks.
+Verification has two intended modes:
 
-## 13. Explanation
+```text
+static check  → compile-time rejection when decidable
+runtime check → deterministic failure when not decidable statically
+```
 
-Explanation provides a structured account of why a semantic result was produced.
+The same mechanism may later support contracts, resource constraints, and selected safety invariants.
 
-Example:
+## 15. Explanation and provenance
+
+`اشرح` requests a structured explanation of a semantic result.
 
 ```arabic
 اشرح:
     لماذا أحمد بالغ؟
 ```
 
-The reference implementation should return a trace or explanation graph derived from facts, rules, and constraints.
+Explanation is not a second inference engine. It should expose information already available in the semantic trace:
 
-It must not require an LLM to determine the logical answer.
+```text
+FACT + RULE + MATCH
+        ↓
+     RESULT
+        ↓
+  EXPLANATION
+```
 
-## 14. Semantic AST
+The compiler/runtime should distinguish:
 
-The initial universal AST node families are:
+- **fact** — explicitly declared information
+- **derived fact** — produced by a rule
+- **verified condition** — checked invariant
+- **explanation** — provenance of a result
+- **unknown** — insufficient information
+
+The distinction between `false` and `unknown` must not be lost in the reasoning layer.
+
+## 16. Semantic AST
+
+The initial Universal AST node families are:
 
 ```text
 Program
+Declaration
 Binding
 Literal
+Identifier
 Expression
 Condition
 Function
+Call
+Return
 Fact
 Rule
 Query
@@ -286,7 +409,9 @@ Constraint
 Explanation
 ```
 
-Example semantic flow:
+Each AST node should retain source-location information for diagnostics.
+
+Example:
 
 ```text
 FACT
@@ -304,50 +429,171 @@ EXPLANATION
  └── Fact + Rule → Result
 ```
 
-The AST is the stable boundary between localized surface syntax and compiler semantics.
+The Universal AST is the semantic contract between language surfaces and compiler stages.
 
-## 15. Safety model
+## 17. Semantic metadata and Arabic morphology
 
-Safety is a core architectural goal, not a single feature.
+AQEL may attach semantic metadata to identifiers and concepts. A future semantic layer may use Arabic lexical families, roots, patterns, or other linguistic relationships as metadata for organizing concepts.
 
-The compiler should progressively enforce:
+This metadata is not a substitute for formal types and does not automatically determine program behavior.
 
-- type correctness
-- valid control flow
-- valid memory/resource behavior
-- explicit error states where required
-- deterministic verification rules
-
-v0.1 focuses on the foundations. It does not claim to provide a complete memory-safety system yet.
-
-## 16. Multilingual design
-
-Arabic is the canonical surface language for v0.1.
-
-Future language packs may provide alternative keywords or syntax that map into the same universal AST:
+Important boundary:
 
 ```text
-Arabic ─────┐
-Indonesian ─┼──→ Universal AST
-English ────┤
-Other ──────┘
+Arabic morphology → semantic metadata / organization
+Compiler semantics → meaning, safety, optimization, execution
 ```
 
-Language packs must not introduce different semantic meanings for the same AST node.
+No performance or intelligence advantage should be assumed merely from using Arabic linguistic structure.
 
-## 17. Arabic semantic layer
+## 18. Names, scopes, and symbols
 
-AQEL may use Arabic linguistic structure—such as lexical families and root/pattern relationships—as metadata for semantic organization.
+The compiler must maintain a symbol environment for bindings, functions, and semantic entities.
 
-This is an architectural research direction, not a claim that Arabic morphology automatically makes a compiler faster or an algorithm more intelligent.
+v0.1 must distinguish at least:
 
-The compiler remains responsible for parsing, optimization, safety, and execution performance.
+```text
+local binding
+function name
+semantic entity / predicate
+keyword
+```
 
-## 18. Reference implementation
+Shadowing rules must be explicit before a stable grammar is frozen.
 
-The first implementation should be a small, dependency-light reference parser/interpreter.
+The semantic engine must not accidentally confuse two entities merely because their human-readable labels are similar.
 
-Initial executable subset:
+## 19. Error model
+
+Errors belong to explicit categories:
+
+```text
+LEXICAL   — invalid source characters or tokenization
+SYNTAX    — invalid grammar or indentation
+NAME      — unknown or conflicting symbol
+TYPE      — incompatible types
+SEMANTIC  — invalid semantic construct
+VERIFY    — failed verification
+RUNTIME   — failure during execution
+```
+
+Diagnostics should include, where available:
+
+```text
+error category
+source location
+human-readable message
+structured error code
+relevant source span
+```
+
+The exact machine-readable diagnostic format may be standardized separately, but the compiler should not rely on free-form text for tooling integration.
+
+## 20. Evaluation and side effects
+
+AQEL must define evaluation order explicitly before v0.1 compatibility is frozen.
+
+The language should distinguish pure deterministic computation from operations with observable side effects such as:
+
+```text
+output
+file access
+process execution
+network access
+external resources
+```
+
+No external resource should be accessed implicitly merely because a name or semantic query is present in source code.
+
+## 21. Memory and resource model
+
+Memory safety is a core goal, but v0.1 does not yet claim a complete memory model.
+
+The future model must answer:
+
+- who owns a resource?
+- how long is a value valid?
+- when is memory released?
+- what operations can alias memory?
+- how are errors and cleanup handled?
+- how are external handles represented?
+
+AQEL should choose a model based on measured simplicity, safety, runtime cost, and compiler complexity rather than copying another language wholesale.
+
+Until frozen, these rules are **reserved design space**, not stable language guarantees.
+
+## 22. Concurrency model
+
+Concurrency is not yet part of the stable v0.1 executable subset.
+
+Future design must explicitly address:
+
+```text
+shared state
+message passing
+synchronization
+atomic operations
+task cancellation
+resource ownership across tasks
+```
+
+The safety model should prevent data races or make unsafe sharing explicit and auditable.
+
+## 23. Modules, packages, and interoperability
+
+A practical systems language eventually requires a module/package system and a way to call existing native libraries.
+
+These are reserved for the next language/runtime phase:
+
+```text
+module/import model
+package identity and versioning
+dependency resolution
+foreign-function interface (FFI)
+ABI rules
+linking
+platform APIs
+```
+
+The core language should remain small even when the ecosystem becomes large.
+
+## 24. Standard library boundary
+
+AQEL should keep the language core separate from the standard library.
+
+Core language responsibilities include:
+
+```text
+syntax
+AST
+types
+control flow
+functions
+semantic primitives
+safety contracts
+```
+
+The standard library should provide reusable functionality without forcing all users to carry every library feature into the runtime footprint.
+
+## 25. Toolchain contract
+
+A complete AQEL toolchain will eventually need:
+
+```text
+aqel check   → parse + analyze without executing
+aqel run     → execute through reference runtime
+acaqel build → compile native executable
+```
+
+The exact CLI spelling is reserved. The important contract is that checking, execution, and native compilation are distinct operations.
+
+Tooling should support source diagnostics, deterministic exit codes, and machine-readable output for editors/CI.
+
+## 26. Reference implementation
+
+The first implementation should be dependency-light and serve as a semantic reference, not as the final performance implementation.
+
+Minimum executable milestone:
 
 ```arabic
 عرّف العمر: رقم = 20
@@ -356,40 +602,160 @@ Initial executable subset:
     اعرض("بالغ")
 ```
 
-The reference implementation exists to validate grammar and semantics before investing in a native backend.
+The implementation should then add semantic primitives incrementally:
 
-## 19. Non-goals for v0.1
+```text
+bindings → expressions → conditions → functions
+→ facts → rules → queries → inference
+→ verification → explanations
+```
 
-The following are explicitly outside the initial scope:
+Every supported feature should gain conformance tests before it becomes part of the stable grammar.
 
-- claiming Arabic is intrinsically faster than Latin-based syntax
-- requiring an LLM or cloud service to run programs
-- copying another language's ownership model without evidence
-- building a large standard library before the core language stabilizes
-- implementing every natural-language construction as syntax
+## 27. Conformance and compatibility
 
-## 20. Benchmark plan
+A feature is not considered stable merely because one implementation accepts it.
 
-AQEL performance claims must be evidence-based.
+Before freezing v0.1, the project should have:
 
-The benchmark suite should use reproducible workloads and compare AQEL with established systems languages such as **C, Rust, Zig, and Go**.
+- positive syntax tests
+- negative syntax tests
+- type-checking tests
+- semantic execution tests
+- Unicode/RTL tests
+- deterministic reasoning tests
+- diagnostic tests
+- AST snapshot tests where appropriate
+
+A **conformance suite** becomes the authority for compatibility between compiler versions and future language packs.
+
+## 28. Multilingual architecture
+
+Arabic is canonical for v0.1. Future language packs may map alternative surface syntax to the same Universal AST:
+
+```text
+Arabic ─────┐
+Indonesian ─┤
+English ────┼──→ Universal AST → Common Compiler
+Other ──────┘
+```
+
+A language pack is allowed to differ in surface grammar, but not in the meaning of the shared semantic nodes.
+
+## 29. AI boundary
+
+AQEL may later expose optional AI-assisted developer tooling, but AI is not part of the core semantic authority.
+
+Allowed future uses may include:
+
+```text
+code completion
+natural-language documentation
+optimization suggestions
+query assistance
+interactive debugging
+```
+
+Core compilation, type checking, safety validation, deterministic inference, and program execution must remain possible without an external AI service.
+
+## 30. Security principles
+
+The language/runtime should follow these defaults:
+
+- no implicit network access
+- no implicit shell/process execution
+- no hidden code loading
+- explicit permissions for sensitive resources when a capability system is introduced
+- deterministic dependency resolution
+- reproducible builds where practical
+- machine-readable security-relevant diagnostics
+
+This section defines direction; concrete OS-level sandboxing and capability APIs are later work.
+
+## 31. Non-goals for v0.1
+
+The following are explicitly outside stable v0.1 scope:
+
+- claiming Arabic is intrinsically faster than Latin-based languages
+- requiring an LLM to run or compile code
+- treating natural-language ambiguity as valid program semantics
+- freezing a complete ownership/memory model before implementation evidence
+- freezing concurrency before the safety model exists
+- building a huge standard library before the core language stabilizes
+- defining every natural-language expression as syntax
+- promising binary/RAM superiority before reproducible benchmarks exist
+
+## 32. Benchmark and measurement plan
+
+All performance claims must be reproducible.
+
+Initial comparison targets:
+
+```text
+C
+Rust
+Zig
+Go
+AQEL
+```
 
 Primary metrics:
 
 | Metric | Purpose |
 |---|---|
-| Compile time | Compiler efficiency |
-| Executable size | Deployment footprint |
-| Startup time | Launch overhead |
-| Peak RAM | Runtime footprint |
-| CPU time | Raw execution cost |
-| Throughput | Work completed per unit time |
-| Safety checks | Cost and coverage of safety mechanisms |
+| Compile time | compiler efficiency |
+| Executable size | deployment footprint |
+| Startup time | launch overhead |
+| Peak RAM | memory footprint |
+| CPU time | execution cost |
+| Throughput | useful work per unit time |
+| Safety overhead | cost of safety mechanisms |
+| Runtime dependencies | deployment complexity |
 
-The project goal of being “lighter than Rust” is therefore treated as a benchmark target, not a pre-existing fact.
+Benchmark methodology should record compiler version, optimization settings, target CPU/OS, workload, input size, warm/cold conditions where relevant, and measurement procedure.
 
-## 21. Versioning policy
+The project goal of being “lighter than Rust” is a **testable target**, not an assumption.
 
-The v0.1 specification is intentionally a draft. Syntax may change while the compiler prototype is being built.
+## 33. Versioning policy
 
-Once the reference implementation can parse and execute the minimum subset reproducibly, the project can freeze a stable v0.1 grammar and begin compatibility guarantees.
+The current document is a draft specification.
+
+Recommended compatibility stages:
+
+```text
+Draft
+  ↓
+Reference implementation
+  ↓
+Conformance suite
+  ↓
+Grammar freeze
+  ↓
+Stable v0.1
+```
+
+Changes that alter AST meaning or observable program behavior after stable v0.1 must require an explicit language-version change.
+
+## 34. Open design decisions
+
+The following items are intentionally visible rather than hidden gaps:
+
+```text
+[ ] final function grammar
+[ ] final loop grammar
+[ ] exact literal/boolean spelling
+[ ] operator precedence
+[ ] exact Unicode normalization policy
+[ ] identifier restrictions and confusable policy
+[ ] shadowing rules
+[ ] evaluation order
+[ ] complete error-code catalog
+[ ] memory/ownership model
+[ ] concurrency model
+[ ] module/import syntax
+[ ] package/dependency model
+[ ] FFI/ABI contract
+[ ] native backend choice
+```
+
+These are the next engineering decisions required before claiming a stable executable v0.1.
