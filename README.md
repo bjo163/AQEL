@@ -1,39 +1,43 @@
 # AQEL
 
-**AQEL** is an Arabic-first, multilingual programming language designed around four core goals:
+**AQEL** is an Arabic-first, multilingual programming language built around four engineering goals:
 
 > **LIGHT · SMART · SAFE · FAST**
 
-AQEL is intended to make programs easier to express at the human-language level while keeping the execution model small, native, and performance-oriented.
+AQEL explores a different programming model: humans write expressive, readable source code while the compiler translates that meaning into a small, predictable, high-performance execution model.
 
-## Vision
+## Why AQEL?
 
-AQEL separates the language humans write from the semantic representation used by the compiler:
+Most programming languages are designed around machine-oriented syntax first and human language second. AQEL starts from the opposite direction:
 
 ```text
 Human Language
-     ↓
+      ↓
 Semantic Parser
-     ↓
+      ↓
 Universal AST
-     ↓
+      ↓
 Safety + Reasoning
-     ↓
+      ↓
 Native Code
 ```
 
-Arabic is the first-class surface syntax. The architecture is language-neutral so Indonesian, English, and other languages can map to the same semantic core later.
+Arabic is the first-class surface language in v0.1. The underlying semantic core is language-neutral, so future language packs can support Indonesian, English, and other human languages without creating separate language semantics.
 
-## Design pillars
+## The four pillars
 
-- **LIGHT** — small runtime, low overhead, minimal dependencies.
-- **SMART** — facts, rules, inference, verification, and explanations are native concepts.
-- **SAFE** — strong typing and memory-safety-oriented design by default.
-- **FAST** — native compilation, fast startup, and measurable performance targets.
+| Pillar | Goal |
+|---|---|
+| **LIGHT** | Small runtime, low overhead, minimal dependencies, fast startup. |
+| **SMART** | Native concepts for facts, rules, inference, verification, and explanation. |
+| **SAFE** | Strong typing and safety-oriented semantics by default. |
+| **FAST** | Native compilation with measurable performance targets. |
+
+These are engineering goals. AQEL does not assume that any natural language is inherently faster or more intelligent than another.
 
 ## Arabic-first syntax
 
-Example:
+A basic AQEL program can read close to natural Arabic:
 
 ```arabic
 عرّف العمر: رقم = 20
@@ -42,7 +46,7 @@ Example:
     اعرض("بالغ")
 ```
 
-Semantic example:
+AQEL also experiments with semantic programming constructs:
 
 ```arabic
 حقيقة:
@@ -61,25 +65,92 @@ Semantic example:
     لماذا أحمد بالغ؟
 ```
 
-## Status
+The goal is not to hide computation behind vague natural-language interpretation. The goal is to give well-defined semantic constructs a human-readable surface syntax.
 
-AQEL is in the **v0.1 foundation stage**. The current goal is to define a minimal grammar and semantic core before implementing a native compiler.
+## Architecture
+
+AQEL separates **surface language** from **semantic meaning**.
+
+```text
+Arabic / Future Language Packs
+             ↓
+        Lexer + Parser
+             ↓
+        Universal AST
+             ↓
+   Type / Safety / Semantics
+             ↓
+    Reasoning + Verification
+             ↓
+      Native Code Backend
+```
+
+This separation is important: language localization changes how programmers write programs, but it should not change what those programs mean.
+
+## v0.1 status
+
+AQEL is currently in the **foundation stage**. The specification defines the initial language direction, lexical policy, semantic concepts, and benchmark targets.
+
+The immediate implementation goal is a small reference parser/interpreter that can validate the core syntax before a native backend is introduced.
 
 ## Roadmap
 
-1. Define the lexical rules and Unicode/RTL policy.
-2. Define the v0.1 grammar.
-3. Build a reference parser/interpreter.
-4. Build the semantic AST.
-5. Add static typing and safety checks.
-6. Add fact/rule/inference primitives.
-7. Add a native backend.
-8. Benchmark binary size, RAM, startup time, compile time, and execution speed against C, Rust, Zig, and Go.
+### Phase 1 — Foundation
 
-## Principles
+- [x] Define project pillars
+- [x] Define Arabic-first direction
+- [x] Define UTF-8 and RTL lexical policy
+- [x] Define initial semantic AST families
+- [ ] Implement lexer
+- [ ] Implement parser
+- [ ] Add executable v0.1 examples
 
-AQEL does **not** assume that Arabic itself makes software faster or more intelligent. Arabic is the human-facing language layer; intelligence and performance come from the compiler, semantic model, optimizer, and runtime design.
+### Phase 2 — Semantic Core
+
+- [ ] Static typing
+- [ ] Safety checks
+- [ ] Facts and rules
+- [ ] Deterministic inference
+- [ ] Verification / constraints
+- [ ] Structured explanations
+
+### Phase 3 — Native Execution
+
+- [ ] Native code generation
+- [ ] Minimal runtime
+- [ ] Optimizer
+- [ ] Cross-platform build support
+
+### Phase 4 — Measurement
+
+- [ ] Reproducible benchmark suite
+- [ ] Binary-size comparison
+- [ ] Peak-RAM comparison
+- [ ] Startup-time comparison
+- [ ] Compile-time comparison
+- [ ] Runtime-performance comparison
+
+Initial comparison targets: **C, Rust, Zig, and Go**.
+
+> “Lighter than Rust” is a target to test with benchmarks, not a claim made in advance.
+
+## Documentation
+
+- [`docs/SPEC_V0.1.md`](docs/SPEC_V0.1.md) — language specification draft
+- [`examples/hello.aqel`](examples/hello.aqel) — first example program
+
+## Design principles
+
+**Human-readable, machine-precise.** Natural-language syntax must still map to deterministic semantics.
+
+**Semantic core first.** Surface syntax may evolve, but the universal semantic representation should remain stable.
+
+**Safety by construction.** Invalid programs should be rejected as early as practical.
+
+**Intelligence without mandatory AI.** Facts, rules, constraints, inference, and explanations should be deterministic and lightweight. Optional AI-assisted tooling can be added later without making it a runtime requirement.
+
+**Measure, do not assume.** Claims about speed, memory, binary size, or developer productivity must be supported by reproducible experiments.
 
 ## License
 
-License to be selected with the project maintainers.
+The project license has not yet been selected.
