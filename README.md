@@ -1,49 +1,83 @@
 # AQEL
 
-**AQEL** is an Arabic-first, multilingual programming language built around four engineering goals:
+> **Arabic-first programming. Universal semantics. Deterministic execution.**
 
-> **LIGHT · SMART · SAFE · FAST**
+**AQEL** is a programming language project built around four engineering goals:
 
-AQEL explores a programming model where humans can express intent clearly while the compiler preserves precise, deterministic semantics and targets a small, high-performance execution model.
+**LIGHT · SMART · SAFE · FAST**
 
-## Core idea
+AQEL starts with an Arabic-first language surface and a language-neutral semantic core. The aim is simple: make source code readable to humans, precise for machines, and practical to run.
 
-AQEL separates the language humans write from the meaning the compiler executes:
+> **Current status:** pre-release development toward **AQEL v0.1**.
+
+---
+
+## Why AQEL?
+
+Most programming languages force the programmer to think in the language's syntax first. AQEL explores another direction: an Arabic-native surface that maps into a precise internal representation without depending on an AI system to decide what the code means.
+
+AQEL is **not** “Python translated into Arabic”. The project is designed around a semantic pipeline:
 
 ```text
 Arabic / Future Language Packs
-             ↓
-            Lexer
-             ↓
-           Parser
-             ↓
-       Universal AST
-             ↓
-  Type + Safety + Semantics
-             ↓
- Reasoning + Verification
-             ↓
-      Native Backend
+              ↓
+          Normalizer
+              ↓
+             Lexer
+              ↓
+            Parser
+              ↓
+        Universal AST
+              ↓
+   Name + Type + Safety Analysis
+              ↓
+    Semantic / SMART Engine
+              ↓
+        IR / Optimization
+              ↓
+        Native Execution
 ```
 
-Arabic is first-class in v0.1. The semantic core is language-neutral, so future Indonesian, English, and other language surfaces can target the same underlying model.
+The architecture keeps the **language surface** separate from the **meaning executed by the compiler**. That gives AQEL a path to Indonesian, English, and other language surfaces later without duplicating the language's semantic core.
 
-## The four pillars
+---
 
-| Pillar | Engineering goal |
+## LIGHT · SMART · SAFE · FAST
+
+| Pillar | AQEL engineering target |
 |---|---|
 | **LIGHT** | Small runtime, low overhead, minimal mandatory dependencies, fast startup. |
-| **SMART** | Native semantic constructs for facts, rules, queries, inference, verification, and explanations. |
-| **SAFE** | Strong typing and safety-oriented validation by default. |
-| **FAST** | Native execution and reproducible performance measurement. |
+| **SMART** | First-class semantic operations for facts, rules, queries, inference, verification, and explanations. |
+| **SAFE** | Strong typing, deterministic behavior, and early rejection of invalid programs. |
+| **FAST** | Native-oriented execution with reproducible measurements instead of performance assumptions. |
 
-These are goals to engineer and test. AQEL does **not** assume that Arabic itself makes software faster or more intelligent.
+These are **engineering goals to measure**, not marketing claims. In particular, Arabic itself is not assumed to make programs faster or more intelligent.
 
-## What makes AQEL different?
+---
 
-AQEL is not intended to be “Python with Arabic keywords”. The important experiment is **Arabic-native semantic programming**: a readable surface language mapped into an explicit, language-neutral semantic representation.
+## Arabic-first syntax
 
-The semantic layer is designed to support both ordinary computation and structured knowledge operations.
+AQEL treats Arabic as a first-class programming surface.
+
+### Basic program
+
+```arabic
+عرّف الاسم: نص = "AQEL"
+اعرض("مرحبا من " + الاسم)
+```
+
+### Conditional
+
+```arabic
+عرّف العمر: رقم = 20
+
+إذا كان العمر >= 18:
+    اعرض("بالغ")
+وإلا:
+    اعرض("قاصر")
+```
+
+### Semantic / SMART direction
 
 ```arabic
 حقيقة:
@@ -62,15 +96,11 @@ The semantic layer is designed to support both ordinary computation and structur
     لماذا أحمد بالغ؟
 ```
 
-The syntax may look natural-language-like, but the compiler must still parse it into precise semantic structures. AQEL does not depend on an LLM to decide what valid code means.
+The last example describes the semantic direction of AQEL. The first release will only claim constructs that are actually implemented and covered by conformance tests.
 
-## Arabic-first design
+### Core keywords
 
-AQEL treats Arabic as a real programming language surface, not merely a translation layer.
-
-The first language surface uses Arabic keywords such as:
-
-| Keyword | Role |
+| Arabic | Meaning |
 |---|---|
 | `عرّف` | define a binding |
 | `إذا` | conditional |
@@ -86,136 +116,219 @@ The first language surface uses Arabic keywords such as:
 | `تحقق` | verification / constraint |
 | `اشرح` | explanation |
 
-Arabic linguistic structure such as lexical families and root-pattern relationships may later be used as semantic metadata. This is a research direction, not a claim that morphology automatically improves runtime performance.
+Diacritics are not intended to be mandatory. Unicode normalization, identifiers, RTL/Bidi behavior, indentation, literals, and precedence are specified explicitly so that readable Arabic source still has machine-precise meaning.
 
-## Safety and determinism
-
-AQEL is designed around a simple rule:
-
-> **Human-readable syntax must remain machine-precise.**
-
-The compiler should reject ambiguous, invalid, or unsafe programs as early as practical.
-
-The language semantics should be deterministic. Future AI-assisted tooling may help with authoring, discovery, optimization suggestions, or explanations, but an AQEL program must not require a remote AI system merely to determine its basic meaning.
+---
 
 ## Universal semantic core
 
-Surface languages are adapters. They should map into one semantic model:
+AQEL keeps language-specific syntax at the edge:
 
 ```text
 Arabic ─────┐
 Indonesian ─┤
-English ────┼──→ Universal AST → Compiler
+English ────┼──→ Universal AST → Semantic Core → Execution
 Other ──────┘
 ```
 
-This provides a path toward multilingual programming without duplicating language semantics.
+This is the foundation for multilingual programming without creating multiple incompatible implementations of the same language semantics.
 
-## v0.1 scope
+---
 
-The foundation specification defines:
+## v0.1: the first usable release
 
-- UTF-8 and Arabic RTL source handling
-- identifier and keyword policy
-- indentation-sensitive blocks
-- basic bindings and types
-- expressions and conditions
-- functions as a reserved semantic family
-- facts, rules, inference, verification, and explanation
-- a universal AST model
-- safety and determinism requirements
-- a path toward native compilation
+The first release is intentionally small.
 
-Some advanced areas remain deliberately reserved for later versions, including the final memory model, concurrency model, module/package system, foreign-function interface, complete error model, optimizer contracts, and platform-specific ABI details.
+A **usable AQEL v0.1** means a new user can:
 
-Making those boundaries explicit is important: **AQEL should evolve without silently changing the language's fundamental semantics.**
+1. obtain/build the AQEL CLI with minimal setup;
+2. create a `.aqel` file;
+3. run it deterministically;
+4. use the documented Arabic-first core syntax;
+5. receive stable diagnostics for invalid programs;
+6. run the examples and conformance suite;
+7. reproduce the documented release build.
 
-## Current repository
+The release is **not** complete merely because the specification exists.
+
+### Planned v0.1 CLI
+
+```text
+aqel run <file.aqel>
+aqel check <file.aqel>
+aqel version
+aqel help
+```
+
+These commands become the public interface only after their implementation and integration tests are complete.
+
+---
+
+## Quick Start
+
+### From source
+
+During the current pre-release phase, the exact build/install commands are being finalized in the release-engineering issues.
+
+The intended first-run experience is:
+
+```text
+git clone https://github.com/bjo163/AQEL.git
+cd AQEL
+<build-command>
+aqel run examples/hello.aqel
+```
+
+Expected example source:
+
+```arabic
+# AQEL v0.1 example
+
+عرّف الاسم: نص = "AQEL"
+اعرض("مرحبا من " + الاسم)
+```
+
+The final README will replace `<build-command>` with the verified release command before the v0.1 tag is published.
+
+---
+
+## Project structure
 
 ```text
 AQEL/
-├── README.md
 ├── docs/
 │   └── SPEC_V0.1.md
-└── examples/
-    └── hello.aqel
+├── examples/
+│   └── hello.aqel
+├── README.md
+└── ... implementation / tests / tooling ...
 ```
 
-The next implementation milestone is a dependency-light reference lexer/parser/interpreter. That implementation will turn the current specification into executable tests rather than adding a large runtime prematurely.
+The repository is being built in small, auditable steps rather than introducing a large runtime before the language contracts are stable.
 
-## Roadmap
+---
 
-### Phase 1 — Foundation
+## Development roadmap
 
-- [x] Define LIGHT · SMART · SAFE · FAST
-- [x] Define Arabic-first direction
-- [x] Define UTF-8 / RTL policy
-- [x] Define universal semantic AST direction
-- [x] Define deterministic semantic primitives
-- [ ] Lexer
-- [ ] Parser
-- [ ] Reference interpreter
-- [ ] Conformance tests
+The master execution plan is **Issue #40 — AQEL v0.1 Release Tracker**.
 
-### Phase 2 — Semantic Core
+### 1. Language contract
 
-- [ ] Static type checker
-- [ ] Safety validation
-- [ ] Facts and rules
-- [ ] Deterministic inference
-- [ ] Verification / constraints
-- [ ] Structured explanation traces
+- [x] Arabic-first direction
+- [x] Universal semantic-core direction
+- [x] UTF-8 / RTL policy direction
+- [ ] normalization contract
+- [ ] identifier rules
+- [ ] literals and strings
+- [ ] expressions and precedence
+- [ ] scopes and name resolution
+- [ ] v0.1 type rules
+- [ ] indentation and blocks
 
-### Phase 3 — Language Runtime
+### 2. Compiler front end
 
-- [ ] Error model
-- [ ] Memory/resource model
-- [ ] Modules and packages
-- [ ] Standard library foundation
-- [ ] Concurrency model
-- [ ] C/system interoperability
+- [ ] source loader
+- [ ] lexer
+- [ ] parser
+- [ ] Universal AST
+- [ ] resolver
+- [ ] type checker
+- [ ] diagnostic engine
 
-### Phase 4 — Native Execution
+### 3. Execution + SMART semantics
 
-- [ ] Native code generation
-- [ ] Minimal runtime
-- [ ] Optimization pipeline
-- [ ] Platform targets
-- [ ] Reproducible builds
+- [ ] reference interpreter
+- [ ] functions
+- [ ] deterministic evaluation order
+- [ ] fact store
+- [ ] rule evaluator
+- [ ] inference engine
+- [ ] verification / constraints
+- [ ] provenance and explanations
 
-### Phase 5 — Measurement
+### 4. Usable CLI + tests
 
-- [ ] Benchmark harness
-- [ ] Compile-time measurement
-- [ ] Executable-size measurement
-- [ ] Startup-time measurement
-- [ ] Peak-RAM measurement
-- [ ] Runtime-performance measurement
-- [ ] Safety-overhead measurement
+- [ ] reference CLI
+- [ ] parser/lexer conformance tests
+- [ ] semantic/type conformance tests
+- [ ] end-to-end examples
+- [ ] negative/error tests
+- [ ] deterministic conformance runner
 
-Initial comparison targets: **C, Rust, Zig, and Go**.
+### 5. Release engineering
 
-> “Lighter than Rust” is a project target to test experimentally, not a fact assumed in the design.
+- [ ] build system
+- [ ] install/distribution path
+- [ ] CI
+- [ ] reproducible release artifacts
+- [ ] minimum standard library
+- [ ] README / Quick Start verification
+- [ ] v0.1 compatibility gate
+- [ ] release-candidate validation
+
+---
+
+## What AQEL deliberately does **not** promise yet
+
+AQEL v0.1 should not freeze or claim more than the implementation can prove.
+
+Deferred or evolving areas include:
+
+- final long-term memory/ownership model;
+- production concurrency model;
+- stable cross-version native ABI;
+- package registry and ecosystem tooling;
+- fully optimized native backend;
+- remote AI/LLM dependency for core language meaning.
+
+The principle is:
+
+> **Ship a small language that works completely before growing a large language that works partially.**
+
+---
 
 ## Documentation
 
-- [`docs/SPEC_V0.1.md`](docs/SPEC_V0.1.md) — language specification and semantic foundation
-- [`examples/hello.aqel`](examples/hello.aqel) — minimal source example
+- [`docs/SPEC_V0.1.md`](docs/SPEC_V0.1.md) — v0.1 language and semantic specification
+- [`examples/hello.aqel`](examples/hello.aqel) — first source example
+- [Issue #40](https://github.com/bjo163/AQEL/issues/40) — release tracker
 
-## Design principles
+---
+
+## Engineering principles
 
 **Human-readable, machine-precise.** Readability never replaces formal semantics.
 
-**Semantic core first.** The universal AST is the boundary between language surface and compiler meaning.
+**Semantic core first.** The Universal AST is the boundary between language surfaces and compiler meaning.
 
-**Safety by construction.** Prefer compile-time rejection over late failure where practical.
+**Safety by construction.** Prefer early, deterministic rejection over ambiguous behavior.
 
-**Intelligence without mandatory AI.** Core reasoning must be deterministic, inspectable, and lightweight.
+**Intelligence without mandatory AI.** Semantic reasoning should be inspectable and deterministic.
 
-**Minimal by default.** Every required runtime feature has a cost and must justify its place in the core.
+**Minimal by default.** Every core runtime feature has a cost and must justify its place.
 
-**Measure, do not assume.** Performance, memory, binary size, and productivity claims require reproducible evidence.
+**Measure, do not assume.** RAM, binary size, startup time, compile time, and runtime performance require reproducible evidence.
+
+---
+
+## Contributing
+
+AQEL is being developed incrementally. The best contribution is a small, testable change that matches the current specification and release tracker.
+
+Before introducing new syntax or runtime behavior, check the relevant issue and the v0.1 specification first.
+
+---
 
 ## License
 
-The project license has not yet been selected.
+A project license has not yet been selected.
+
+---
+
+## Project status
+
+**Target:** first usable AQEL release — `v0.1.0`
+
+**Current phase:** implementation foundation
+
+**Primary tracker:** [AQEL v0.1 Release Tracker](https://github.com/bjo163/AQEL/issues/40)
